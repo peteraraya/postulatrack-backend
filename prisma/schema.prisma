@@ -1,0 +1,185 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  extensions = [vector]
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  googleId  String?  @unique
+  name      String
+  avatarUrl String?
+  profile   Profile?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Profile {
+  id            String   @id @default(uuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  headline      String?
+  experience    String?
+  summary       String?
+  skills        String[]
+  location      String?
+  portfolioUrl  String?
+  cvDocumentUrl String?
+  
+  experiences Experience[]
+  educations  Education[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Experience {
+  id          String   @id @default(uuid())
+  profileId   String
+  profile     Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  company     String
+  position    String
+  startDate   DateTime
+  endDate     DateTime?
+  description String?
+  isCurrent   Boolean  @default(false)
+}
+
+model Education {
+  id          String   @id @default(uuid())
+  profileId   String
+  profile     Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  institution String
+  degree      String
+  fieldOfStudy String?
+  startDate   DateTime
+  endDate     DateTime?
+}
+
+model JobSource {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  url       String
+  offers    JobOffer[]
+}
+
+model JobOffer {
+  id          String   @id @default(uuid())
+  sourceId    String
+  source      JobSource @relation(fields: [sourceId], references: [id])
+  externalId  String
+  title       String
+  company     String
+  location    String?
+  country     String?
+  workModel   String?
+  description String
+  url         String
+  salaryMin   Float?
+  salaryMax   Float?
+  currency    String?
+  skills      String[]
+  seniority   String?
+  applicationsCount Int?
+  perks       String[]
+  
+  // Embedding for semantic search (using Unsupported vector)
+  embedding   Unsupported("vector(1536)")?
+
+  applications Application[]
+  recommendations RecommendationScore[]
+  savedBy       SavedJob[]
+
+  publishedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([sourceId, externalId])
+}
+
+model SavedJob {
+  id        String   @id @default(uuid())
+  userId    String
+  offerId   String
+  offer     JobOffer @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, offerId])
+}
+
+enum ApplicationStatus {
+  SENT
+  INTERVIEW
+  REJECTED
+  OFFER
+  WITHDRAWN
+}
+
+model Application {
+  id          String   @id @default(uuid())
+  userId      String
+  offerId     String
+  offer       JobOffer @relation(fields: [offerId], references: [id])
+  status      ApplicationStatus @default(SENT)
+  notes       String?  @db.Text
+  contactName String?
+  contactEmail String?
+  contactLinkedin String?
+  interviewDate DateTime?
+  
+  events      ApplicationEvent[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, offerId])
+}
+
+model ApplicationEvent {
+  id            String   @id @default(uuid())
+  applicationId String
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  status        ApplicationStatus
+  notes         String?
+  createdAt     DateTime @default(now())
+}
+
+model RecommendationScore {
+  id          String   @id @default(uuid())
+  userId      String
+  offerId     String
+  offer       JobOffer @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  score       Float
+  reasons     Json?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, offerId])
+}
+
+model JobAlert {
+  id        String   @id @default(uuid())
+  userId    String
+  filters   String
+  createdAt DateTime @default(now())
+}
+
+model ScrapingJob {
+  id          String   @id @default(uuid())
+  source      String
+  status      String   // PENDING, RUNNING, COMPLETED, FAILED
+  itemsFound  Int      @default(0)
+  itemsAdded  Int      @default(0)
+  error       String?
+  startedAt   DateTime @default(now())
+  finishedAt  DateTime?
+}

@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  # NestJS API backend
+  api:
+    build:
+      context: .
+      target: development
+    container_name: postulatrack_api
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules # Evita sobrescribir los node_modules del contenedor con los del host
+    env_file:
+      - .env
+    environment:
+      # Sobrescribimos credenciales locales para usar la red interna de Docker
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/postulatrack?schema=public
+    depends_on:
+      db:
+        condition: service_healthy
+    command: npm run start:dev
+
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: postulatrack_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postulatrack
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pg_data:
