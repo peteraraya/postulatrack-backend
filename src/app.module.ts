@@ -13,6 +13,8 @@ import * as Joi from 'joi';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { JobAlertsModule } from './modules/job-alerts/job-alerts.module';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
 
 @Module({
   imports: [
@@ -46,7 +48,7 @@ import { JobAlertsModule } from './modules/job-alerts/job-alerts.module';
     AiModule,
     JobAlertsModule,
   ],
-  controllers: [],
-  providers: [],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {}
