@@ -119,6 +119,20 @@ docker build --target production -t postulatrack-api:latest .
 
 ---
 
+## 🚀 Despliegue en Producción (Vercel)
+
+Si estás desplegando el backend en **Vercel**, asegúrate de configurar correctamente las siguientes variables de entorno en el panel de Vercel (Pestaña "Settings" -> "Environment Variables"):
+
+- `DATABASE_URL`: Tu conexión de producción de Neon DB o Supabase.
+- `JWT_SECRET`: Un string aleatorio y seguro.
+- `FRONTEND_URL`: La URL pública de tu frontend (ej. `https://postulatrack.vercel.app`).
+- `GOOGLE_CALLBACK_URL`: **¡CRÍTICO!** Debe ser la URL de producción exacta, por ejemplo: `https://tu-backend.vercel.app/api/auth/google/callback`. Si dejas `localhost:3000`, el inicio de sesión con Google fallará al intentar redirigir.
+- `GOOGLE_CLIENT_ID` y `GOOGLE_CLIENT_SECRET`: Asegúrate de haber agregado la URL de tu backend a los orígenes autorizados en la Consola de Google Cloud.
+
+El archivo `package.json` ya incluye `"postinstall": "npx prisma generate"`, por lo que Vercel compilará automáticamente los modelos de la base de datos sin errores de TypeScript.
+
+---
+
 ## 💻 Inicialización Manual (Local)
 
 Si prefieres ejecutar el código Node.js directamente en tu máquina anfitriona:
