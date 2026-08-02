@@ -8,14 +8,17 @@ export class AppController {
   constructor(private readonly appService: AppService) {}
 
   @Get()
-  @Redirect('/api/docs', 302)
   @ApiOperation({
-    summary: 'Redirects to API Docs',
-    description: 'Redirects the root URL to the Swagger API documentation.',
+    summary: 'Health Check',
+    description: 'Returns API status.',
   })
-  @ApiResponse({ status: 302, description: 'Redirect to /api/docs' })
+  @ApiResponse({ status: 200, description: 'API is running.' })
   getRoot() {
-    // Redirige al Swagger al acceder a la raíz para evitar 404 si no hay frontend
+    return {
+      status: 'OK',
+      message: 'Welcome to PostulaTrack API',
+      docs: '/api/docs',
+    };
   }
 
   @Get('health')
