@@ -22,8 +22,7 @@ import {
 } from '@nestjs/swagger';
 import type { AuthUser } from '../../common/interfaces/auth-user.interface';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
+import { cloudinaryStorage } from '../../config/cloudinary.config';
 
 @ApiTags('Profile')
 @ApiBearerAuth()
@@ -47,17 +46,7 @@ export class ProfileController {
   @Post('cv')
   @UseInterceptors(
     FileInterceptor('cvDocument', {
-      storage: diskStorage({
-        destination: './uploads/cvs',
-        filename: (req, file, cb) => {
-          const uniqueSuffix =
-            Date.now() + '-' + Math.round(Math.random() * 1e9);
-          cb(
-            null,
-            `${(req.user as any)?.userId || 'user'}-${uniqueSuffix}${extname(file.originalname)}`,
-          );
-        },
-      }),
+      storage: cloudinaryStorage,
       fileFilter: (req, file, cb) => {
         const allowedMimeTypes = [
           'application/pdf',
@@ -120,11 +109,8 @@ export class ProfileController {
       throw new BadRequestException('El campo profile debe ser un JSON válido');
     }
 
-    // Si se subió un archivo, generamos su URL accesible (asumiendo que serviremos estáticos en /uploads)
-    // En producción esto debería ser una URL de S3 u otro storage.
-    const fileUrl = cvDocument
-      ? `${process.env.BACKEND_URL || 'http://localhost:3000'}/uploads/cvs/${cvDocument.filename}`
-      : undefined;
+    // Si se subió un archivo, Cloudinary nos devuelve la URL en la propiedad path
+    const fileUrl = cvDocument ? cvDocument.path : undefined;
 
     return this.profileService.ingestCv(user.userId, profileData, fileUrl);
   }
