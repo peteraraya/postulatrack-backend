@@ -18,7 +18,13 @@ export class GetonboardAdapter implements IJobScraper {
 
       do {
         const url = `https://www.getonbrd.com/api/v0/search/jobs?query=${encodeURIComponent(query)}&page=${currentPage}`;
-        const response = await fetch(url);
+        let response = await fetch(url);
+
+        if (response.status === 429) {
+          this.logger.warn('GetOnBoard rate limit hit on search. Waiting 5 seconds...');
+          await new Promise((resolve) => setTimeout(resolve, 5000));
+          response = await fetch(url); // Retry once
+        }
 
         if (!response.ok) {
           throw new Error(
@@ -50,6 +56,9 @@ export class GetonboardAdapter implements IJobScraper {
               companyName = companyCache.get(companyId)!;
             } else {
               try {
+                // Delay to avoid 429 Too Many Requests
+                await new Promise((resolve) => setTimeout(resolve, 500));
+                
                 // Fetch company details to get the real name
                 const compRes = await fetch(
                   `https://www.getonbrd.com/api/v0/companies/${companyId}`,
@@ -60,6 +69,9 @@ export class GetonboardAdapter implements IJobScraper {
                     compData.data?.attributes?.name ||
                     `Company ID: ${companyId}`;
                   companyCache.set(companyId, companyName);
+                } else if (compRes.status === 429) {
+                  this.logger.warn('GetOnBoard API rate limit reached fetching company');
+                  companyName = `Company ID: ${companyId}`;
                 }
               } catch (e) {
                 companyName = `Company ID: ${companyId}`;
@@ -94,6 +106,11 @@ export class GetonboardAdapter implements IJobScraper {
         }
 
         currentPage++;
+        
+        if (currentPage <= totalPages && currentPage <= MAX_PAGES) {
+          // General delay between pages
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+        }
       } while (currentPage <= totalPages && currentPage <= MAX_PAGES);
 
       this.logger.log(

@@ -4,6 +4,8 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { GetonboardAdapter } from './adapters/getonboard.adapter';
 import { ArbeitnowAdapter } from './adapters/arbeitnow.adapter';
 import { RemotiveAdapter } from './adapters/remotive.adapter';
+import { ChiletrabajosAdapter } from './adapters/chiletrabajos.adapter';
+import { ComputrabajoAdapter } from './adapters/computrabajo.adapter';
 import { RecommendationService } from '../recommendation/recommendation.service';
 
 @Injectable()
@@ -15,12 +17,14 @@ export class ScrapingService {
     private readonly getonboardAdapter: GetonboardAdapter,
     private readonly arbeitnowAdapter: ArbeitnowAdapter,
     private readonly remotiveAdapter: RemotiveAdapter,
+    private readonly chiletrabajosAdapter: ChiletrabajosAdapter,
+    private readonly computrabajoAdapter: ComputrabajoAdapter,
     private readonly recommendationService: RecommendationService,
   ) {}
 
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async triggerDailyScrape() {
-    this.logger.log('Starting daily manual scrape');
+    this.logger.log('Starting daily scheduled scrape');
     // Execute asynchronously without blocking
     this.executeScrapingJob().catch((err) => this.logger.error(err));
   }
@@ -49,6 +53,16 @@ export class ScrapingService {
         name: 'Remotive',
         url: 'https://remotive.com',
         adapter: this.remotiveAdapter,
+      },
+      {
+        name: 'Chiletrabajos',
+        url: 'https://www.chiletrabajos.cl',
+        adapter: this.chiletrabajosAdapter,
+      },
+      {
+        name: 'Computrabajo Chile',
+        url: 'https://cl.computrabajo.com',
+        adapter: this.computrabajoAdapter,
       },
     ];
 

@@ -15,7 +15,7 @@ export class RecommendationService {
     // Rule-based matching against all profiles
     const profiles = await this.prisma.profile.findMany({
       include: {
-        experiences: true,
+        workExperiences: true,
       },
     });
 
@@ -42,7 +42,7 @@ export class RecommendationService {
   async calculateForProfile(userId: string) {
     const profile = await this.prisma.profile.findUnique({
       where: { userId },
-      include: { experiences: true },
+      include: { workExperiences: true },
     });
 
     if (!profile) return;
