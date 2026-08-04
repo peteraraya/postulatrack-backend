@@ -2,7 +2,7 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
   previewFeatures = ["postgresqlExtensions"]
 }
 
@@ -23,84 +23,91 @@ model User {
 }
 
 model Profile {
-  id            String   @id @default(uuid())
-  userId        String   @unique
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  headline      String?
-  experience    String?
-  summary       String?
-  skills        String[]
-  location      String?
-  portfolioUrl  String?
-  cvDocumentUrl String?
-  
-  experiences Experience[]
-  educations  Education[]
-  
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firstName       String?
+  lastName        String?
+  phone           String?
+  headline        String?
+  experienceLevel String?
+  summary         String?
+  skills          String[]
+  location        String?
+  availability    String?
+  portfolioUrl    String?
+  linkedinUrl     String?
+  githubUrl       String?
+  languages       String?
+  hobbies         String?
+  cvDocumentUrl   String?
+
+  workExperiences WorkExperience[]
+  educations      Education[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-model Experience {
-  id          String   @id @default(uuid())
+model WorkExperience {
+  id          String  @id @default(uuid())
   profileId   String
-  profile     Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  profile     Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
   company     String
-  position    String
-  startDate   DateTime
-  endDate     DateTime?
-  description String?
-  isCurrent   Boolean  @default(false)
+  role        String
+  startDate   String
+  endDate     String?
+  description String? @db.Text
 }
 
 model Education {
-  id          String   @id @default(uuid())
-  profileId   String
-  profile     Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
-  institution String
-  degree      String
+  id           String    @id @default(uuid())
+  profileId    String
+  profile      Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  institution  String
+  degree       String
   fieldOfStudy String?
-  startDate   DateTime
-  endDate     DateTime?
+  startDate    DateTime
+  endDate      DateTime?
 }
 
 model JobSource {
-  id        String   @id @default(uuid())
-  name      String   @unique
-  url       String
-  offers    JobOffer[]
+  id     String     @id @default(uuid())
+  name   String     @unique
+  url    String
+  offers JobOffer[]
 }
 
 model JobOffer {
-  id          String   @id @default(uuid())
-  sourceId    String
-  source      JobSource @relation(fields: [sourceId], references: [id])
-  externalId  String
-  title       String
-  company     String
-  location    String?
-  country     String?
-  workModel   String?
-  description String
-  url         String
-  salaryMin   Float?
-  salaryMax   Float?
-  currency    String?
-  skills      String[]
-  seniority   String?
+  id                String    @id @default(uuid())
+  sourceId          String
+  source            JobSource @relation(fields: [sourceId], references: [id])
+  externalId        String
+  title             String
+  company           String
+  location          String?
+  country           String?
+  workModel         String?
+  description       String
+  url               String
+  salaryMin         Float?
+  salaryMax         Float?
+  currency          String?
+  skills            String[]
+  seniority         String?
   applicationsCount Int?
-  perks       String[]
-  
-  // Embedding for semantic search (using Unsupported vector)
-  embedding   Unsupported("vector(1536)")?
+  perks             String[]
 
-  applications Application[]
+  // Embedding for semantic search (using Unsupported vector)
+  embedding Unsupported("vector(1536)")?
+
+  applications    Application[]
   recommendations RecommendationScore[]
-  savedBy       SavedJob[]
+  savedBy         SavedJob[]
 
   publishedAt DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   @@unique([sourceId, externalId])
 }
@@ -124,44 +131,44 @@ enum ApplicationStatus {
 }
 
 model Application {
-  id          String   @id @default(uuid())
-  userId      String
-  offerId     String
-  offer       JobOffer @relation(fields: [offerId], references: [id])
-  status      ApplicationStatus @default(SENT)
-  notes       String?  @db.Text
-  contactName String?
-  contactEmail String?
+  id              String            @id @default(uuid())
+  userId          String
+  offerId         String
+  offer           JobOffer          @relation(fields: [offerId], references: [id])
+  status          ApplicationStatus @default(SENT)
+  notes           String?           @db.Text
+  contactName     String?
+  contactEmail    String?
   contactLinkedin String?
-  interviewDate DateTime?
-  
-  events      ApplicationEvent[]
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  interviewDate   DateTime?
+
+  events ApplicationEvent[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([userId, offerId])
 }
 
 model ApplicationEvent {
-  id            String   @id @default(uuid())
+  id            String            @id @default(uuid())
   applicationId String
-  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  application   Application       @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   status        ApplicationStatus
   notes         String?
-  createdAt     DateTime @default(now())
+  createdAt     DateTime          @default(now())
 }
 
 model RecommendationScore {
-  id          String   @id @default(uuid())
-  userId      String
-  offerId     String
-  offer       JobOffer @relation(fields: [offerId], references: [id], onDelete: Cascade)
-  score       Float
-  reasons     Json?
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id      String   @id @default(uuid())
+  userId  String
+  offerId String
+  offer   JobOffer @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  score   Float
+  reasons Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([userId, offerId])
 }
@@ -174,12 +181,12 @@ model JobAlert {
 }
 
 model ScrapingJob {
-  id          String   @id @default(uuid())
-  source      String
-  status      String   // PENDING, RUNNING, COMPLETED, FAILED
-  itemsFound  Int      @default(0)
-  itemsAdded  Int      @default(0)
-  error       String?
-  startedAt   DateTime @default(now())
-  finishedAt  DateTime?
+  id         String    @id @default(uuid())
+  source     String
+  status     String // PENDING, RUNNING, COMPLETED, FAILED
+  itemsFound Int       @default(0)
+  itemsAdded Int       @default(0)
+  error      String?
+  startedAt  DateTime  @default(now())
+  finishedAt DateTime?
 }

@@ -124,7 +124,7 @@ así como mencionar cómo tu experiencia previa se relaciona con los requisitos 
           question: `¿Dónde te ves en los próximos años?`,
           advice:
             'Muestra ambición y deseos de crecimiento alineados con tu perfil actual.',
-          answer: `Busco asumir más responsabilidades como perfil ${profile?.experience || 'avanzado'} y seguir contribuyendo al éxito de mis proyectos.`,
+          answer: `Busco asumir más responsabilidades como perfil ${profile?.experienceLevel || 'avanzado'} y seguir contribuyendo al éxito de mis proyectos.`,
         },
       ],
     };

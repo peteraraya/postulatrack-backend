@@ -3,27 +3,25 @@ import {
   IsOptional,
   IsArray,
   ValidateNested,
-  IsDateString,
-  IsBoolean,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-class ExperienceDto {
+export class WorkExperienceDto {
   @ApiProperty()
   @IsString()
   company!: string;
 
   @ApiProperty()
   @IsString()
-  position!: string;
+  role!: string;
 
   @ApiProperty()
-  @IsDateString()
+  @IsString()
   startDate!: string;
 
   @ApiPropertyOptional()
-  @IsDateString()
+  @IsString()
   @IsOptional()
   endDate?: string;
 
@@ -31,14 +29,9 @@ class ExperienceDto {
   @IsString()
   @IsOptional()
   description?: string;
-
-  @ApiPropertyOptional()
-  @IsBoolean()
-  @IsOptional()
-  isCurrent?: boolean;
 }
 
-class EducationDto {
+export class EducationDto {
   @ApiProperty()
   @IsString()
   institution!: string;
@@ -53,11 +46,11 @@ class EducationDto {
   fieldOfStudy?: string;
 
   @ApiProperty()
-  @IsDateString()
+  @IsString()
   startDate!: string;
 
   @ApiPropertyOptional()
-  @IsDateString()
+  @IsString()
   @IsOptional()
   endDate?: string;
 }
@@ -66,12 +59,32 @@ export class CvIngestionDto {
   @ApiPropertyOptional()
   @IsString()
   @IsOptional()
+  firstName?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  lastName?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  email?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  phone?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
   headline?: string;
 
   @ApiPropertyOptional()
   @IsString()
   @IsOptional()
-  experience?: string;
+  experienceLevel?: string;
 
   @ApiPropertyOptional()
   @IsString()
@@ -92,14 +105,39 @@ export class CvIngestionDto {
   @ApiPropertyOptional()
   @IsString()
   @IsOptional()
+  availability?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
   portfolioUrl?: string;
 
-  @ApiPropertyOptional({ type: [ExperienceDto] })
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  linkedinUrl?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  githubUrl?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  languages?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  hobbies?: string;
+
+  @ApiPropertyOptional({ type: [WorkExperienceDto] })
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => ExperienceDto)
+  @Type(() => WorkExperienceDto)
   @IsOptional()
-  experiences?: ExperienceDto[];
+  workExperiences?: WorkExperienceDto[];
 
   @ApiPropertyOptional({ type: [EducationDto] })
   @IsArray()

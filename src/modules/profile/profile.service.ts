@@ -10,8 +10,11 @@ export class ProfileService {
     const profile = await this.prisma.profile.findUnique({
       where: { userId },
       include: {
-        experiences: true,
+        workExperiences: true,
         educations: true,
+        user: {
+          select: { email: true }
+        }
       },
     });
 
@@ -19,17 +22,29 @@ export class ProfileService {
       throw new NotFoundException('Profile not found');
     }
 
-    return profile;
+    const { user, ...profileData } = profile;
+    return {
+      ...profileData,
+      email: user?.email,
+    };
   }
 
   async ingestCv(userId: string, data: CvIngestionDto, cvDocumentUrl?: string) {
     const updateData: any = {
+      firstName: data.firstName,
+      lastName: data.lastName,
+      phone: data.phone,
       headline: data.headline,
-      experience: data.experience,
+      experienceLevel: data.experienceLevel,
       summary: data.summary,
       skills: data.skills || [],
       location: data.location,
+      availability: data.availability,
       portfolioUrl: data.portfolioUrl,
+      linkedinUrl: data.linkedinUrl,
+      githubUrl: data.githubUrl,
+      languages: data.languages,
+      hobbies: data.hobbies,
     };
 
     if (cvDocumentUrl) {
@@ -41,28 +56,29 @@ export class ProfileService {
       update: updateData,
       create: {
         userId,
-        headline: data.headline,
-        experience: data.experience,
-        summary: data.summary,
-        skills: data.skills || [],
-        location: data.location,
-        portfolioUrl: data.portfolioUrl,
+        ...updateData,
         cvDocumentUrl: cvDocumentUrl,
       },
     });
 
+    // Update email in User model if provided
+    if (data.email) {
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { email: data.email },
+      });
+    }
+
     // Replace experiences
-    if (data.experiences) {
-      await this.prisma.experience.deleteMany({
+    if (data.workExperiences) {
+      await this.prisma.workExperience.deleteMany({
         where: { profileId: profile.id },
       });
-      if (data.experiences.length > 0) {
-        await this.prisma.experience.createMany({
-          data: data.experiences.map((exp) => ({
+      if (data.workExperiences.length > 0) {
+        await this.prisma.workExperience.createMany({
+          data: data.workExperiences.map((exp) => ({
             ...exp,
             profileId: profile.id,
-            startDate: new Date(exp.startDate),
-            endDate: exp.endDate ? new Date(exp.endDate) : null,
           })),
         });
       }
