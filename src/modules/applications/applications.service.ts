@@ -10,7 +10,7 @@ import {
 } from './dto/application.dto';
 import { ApplicationStatus } from '@prisma/client';
 import * as cheerio from 'cheerio';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 
 @Injectable()
 export class ApplicationsService {
@@ -162,7 +162,7 @@ export class ApplicationsService {
       const offer = await this.prisma.jobOffer.create({
         data: {
           sourceId: source.id,
-          externalId: `manual-${uuidv4()}`,
+          externalId: `manual-${randomUUID()}`,
           title: data.title || 'Oferta Manual',
           company: data.company || 'Empresa Manual',
           location: data.location || null,
