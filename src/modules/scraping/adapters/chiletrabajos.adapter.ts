@@ -18,7 +18,7 @@ export class ChiletrabajosAdapter implements IJobScraper {
       for (let page = 0; page < MAX_PAGES; page++) {
         const offset = page * itemsPerPage;
         const url = `https://www.chiletrabajos.cl/encuentra-un-empleo?2=${encodeURIComponent(query)}&13=${offset}`;
-        
+
         const response = await fetch(url);
         if (!response.ok) {
           throw new Error(`Chiletrabajos HTTP status ${response.status}`);
@@ -26,7 +26,7 @@ export class ChiletrabajosAdapter implements IJobScraper {
 
         const html = await response.text();
         const $ = cheerio.load(html);
-        
+
         const jobItems = $('.job-item');
         if (jobItems.length === 0) {
           break; // No more jobs
@@ -37,9 +37,9 @@ export class ChiletrabajosAdapter implements IJobScraper {
             const titleEl = $(el).find('h2.title a');
             const title = titleEl.text().trim();
             const jobUrl = titleEl.attr('href');
-            
+
             if (!title || !jobUrl) return;
-            
+
             // Extraer ID externo de la URL (últimos dígitos)
             const urlParts = jobUrl.split('-');
             const externalId = urlParts[urlParts.length - 1];
@@ -47,7 +47,7 @@ export class ChiletrabajosAdapter implements IJobScraper {
             // Compañía y locación
             let company = 'No especificada';
             let jobLocation = 'Chile';
-            
+
             const metaElements = $(el).find('h3.meta');
             if (metaElements.length > 0) {
               const firstMeta = $(metaElements[0]);
@@ -61,10 +61,16 @@ export class ChiletrabajosAdapter implements IJobScraper {
               }
             }
 
-            const description = $(el).find('p.description').text().replace('Ver más', '').trim();
-            
+            const description = $(el)
+              .find('p.description')
+              .text()
+              .replace('Ver más', '')
+              .trim();
+
             // Determinar si es remoto leyendo el título o la ubicación
-            const isRemote = title.toLowerCase().includes('remoto') || jobLocation.toLowerCase().includes('remoto');
+            const isRemote =
+              title.toLowerCase().includes('remoto') ||
+              jobLocation.toLowerCase().includes('remoto');
 
             offers.push({
               externalId: externalId,
@@ -79,12 +85,16 @@ export class ChiletrabajosAdapter implements IJobScraper {
               seniority: 'No especificado',
             });
           } catch (itemError: any) {
-            this.logger.warn(`Failed to parse a job item: ${itemError.message}`);
+            this.logger.warn(
+              `Failed to parse a job item: ${itemError.message}`,
+            );
           }
         });
       }
 
-      this.logger.log(`Successfully fetched ${offers.length} jobs from Chiletrabajos`);
+      this.logger.log(
+        `Successfully fetched ${offers.length} jobs from Chiletrabajos`,
+      );
       return offers;
     } catch (error) {
       this.logger.error('Error fetching from Chiletrabajos', error);

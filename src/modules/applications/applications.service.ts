@@ -10,6 +10,7 @@ import {
 } from './dto/application.dto';
 import { ApplicationStatus } from '@prisma/client';
 import * as cheerio from 'cheerio';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class ApplicationsService {
@@ -146,49 +147,54 @@ export class ApplicationsService {
   }
 
   async createManual(userId: string, data: any) {
-    // Buscar o crear JobSource "Manual"
-    let source = await this.prisma.jobSource.findUnique({
-      where: { name: 'Manual' },
-    });
-    if (!source) {
-      source = await this.prisma.jobSource.create({
-        data: { name: 'Manual', url: 'https://manual.local' },
+    try {
+      // Buscar o crear JobSource "Manual"
+      let source = await this.prisma.jobSource.findUnique({
+        where: { name: 'Manual' },
       });
-    }
+      if (!source) {
+        source = await this.prisma.jobSource.create({
+          data: { name: 'Manual', url: 'https://manual.local' },
+        });
+      }
 
-    const { v4: uuidv4 } = require('uuid');
-
-    // Create a dummy JobOffer
-    const offer = await this.prisma.jobOffer.create({
-      data: {
-        sourceId: source.id,
-        externalId: `manual-${uuidv4()}`,
-        title: data.title || 'Oferta Manual',
-        company: data.company || 'Empresa Manual',
-        location: data.location || null,
-        url: data.url || '',
-        description: 'Postulación ingresada manualmente por el usuario.',
-        workModel: 'ON_SITE',
-      },
-    });
-
-    // Create application
-    return this.prisma.application.create({
-      data: {
-        userId,
-        offerId: offer.id,
-        status: data.status || ApplicationStatus.SENT,
-        events: {
-          create: [
-            {
-              status: data.status || ApplicationStatus.SENT,
-              notes: 'Manual creation',
-            },
-          ],
+      // Create a dummy JobOffer
+      const offer = await this.prisma.jobOffer.create({
+        data: {
+          sourceId: source.id,
+          externalId: `manual-${uuidv4()}`,
+          title: data.title || 'Oferta Manual',
+          company: data.company || 'Empresa Manual',
+          location: data.location || null,
+          url: data.url || '',
+          description: 'Postulación ingresada manualmente por el usuario.',
+          workModel: 'ON_SITE',
         },
-      },
-      include: { offer: true },
-    });
+      });
+
+      // Create application
+      return await this.prisma.application.create({
+        data: {
+          userId,
+          offerId: offer.id,
+          status: data.status || ApplicationStatus.SENT,
+          events: {
+            create: [
+              {
+                status: data.status || ApplicationStatus.SENT,
+                notes: 'Manual creation',
+              },
+            ],
+          },
+        },
+        include: { offer: true },
+      });
+    } catch (error) {
+      console.error('Error creating manual application:', error);
+      throw new BadRequestException(
+        'No se pudo procesar la postulación manual. Verifica los datos enviados.',
+      );
+    }
   }
 
   async updateInterviewDate(id: string, userId: string, interviewDate: string) {

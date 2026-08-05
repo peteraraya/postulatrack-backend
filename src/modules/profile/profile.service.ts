@@ -13,8 +13,8 @@ export class ProfileService {
         workExperiences: true,
         educations: true,
         user: {
-          select: { email: true }
-        }
+          select: { email: true },
+        },
       },
     });
 

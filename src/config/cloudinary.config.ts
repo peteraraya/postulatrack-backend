@@ -19,7 +19,11 @@ export const cloudinaryStorage = new CloudinaryStorage({
       // Return the correct format based on mimetype to keep extensions
       if (file.mimetype === 'application/pdf') return 'pdf';
       if (file.mimetype === 'application/msword') return 'doc';
-      if (file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') return 'docx';
+      if (
+        file.mimetype ===
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      )
+        return 'docx';
       return 'pdf'; // Default fallback
     },
     resource_type: 'raw',
