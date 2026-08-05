@@ -21,13 +21,8 @@ async function bootstrap() {
   }
 
   app.enableCors({
-    origin: (origin, callback) => {
-      // Si no hay origen (ej. curl/postman) o para permitir todos, retornamos true
-      callback(null, true);
-    },
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    origin: true,
     credentials: true,
-    allowedHeaders: 'Content-Type, Accept, Authorization, X-Requested-With',
   });
   app.use(cookieParser());
 
