@@ -13,12 +13,21 @@ async function bootstrap() {
 
   const uploadDir = join(__dirname, '..', 'uploads', 'cvs');
   if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
+    try {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    } catch (error) {
+      console.warn('Warning: Could not create upload directory:', error);
+    }
   }
 
   app.enableCors({
-    origin: true, // Permite cualquier origen reflejando dinámicamente el origen de la petición (ideal para evitar problemas de CORS en desarrollo)
+    origin: (origin, callback) => {
+      // Si no hay origen (ej. curl/postman) o para permitir todos, retornamos true
+      callback(null, true);
+    },
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
+    allowedHeaders: 'Content-Type, Accept, Authorization, X-Requested-With',
   });
   app.use(cookieParser());
 
