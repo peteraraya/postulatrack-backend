@@ -13,7 +13,8 @@ export class ComputrabajoAdapter implements IJobScraper {
 
       // e.g. https://cl.computrabajo.com/trabajo-de-programador
       const formattedQuery = query.toLowerCase().replace(/\s+/g, '-');
-      let currentUrl: string | null = `https://cl.computrabajo.com/trabajo-de-${formattedQuery}`;
+      let currentUrl: string | null =
+        `https://cl.computrabajo.com/trabajo-de-${formattedQuery}`;
 
       const MAX_PAGES = 3;
       let pagesFetched = 0;
@@ -53,7 +54,8 @@ export class ComputrabajoAdapter implements IJobScraper {
             // Extract ID from URL (the alphanumeric part before #)
             // e.g. /ofertas-de-trabajo/oferta-de-trabajo-de-...-8038F70C2C36435A61373E686DCF3405#lc=ListOffers...
             let externalId = jobUrl.split('#')[0].split('-').pop();
-            if (!externalId) externalId = Math.random().toString(36).substring(7);
+            if (!externalId)
+              externalId = Math.random().toString(36).substring(7);
 
             const companyEl = $(el).find('a.fc_base.t_ellipsis');
             const company = companyEl.text().trim() || 'Confidencial';
@@ -62,8 +64,11 @@ export class ComputrabajoAdapter implements IJobScraper {
             const jobLocation = locationEl.text().trim() || 'Chile';
 
             // Check if it's remote
-            const remoteEl = $(el).find('span:contains("remoto"), span:contains("Remoto")');
-            const isRemote = remoteEl.length > 0 || title.toLowerCase().includes('remoto');
+            const remoteEl = $(el).find(
+              'span:contains("remoto"), span:contains("Remoto")',
+            );
+            const isRemote =
+              remoteEl.length > 0 || title.toLowerCase().includes('remoto');
 
             offers.push({
               externalId,
@@ -83,15 +88,15 @@ export class ComputrabajoAdapter implements IJobScraper {
         });
 
         pagesFetched++;
-        
+
         // Find next page
         const nextUrlEl = $('a:contains("Siguiente")');
         if (nextUrlEl.length > 0) {
-          let nextHref = nextUrlEl.attr('href');
+          const nextHref = nextUrlEl.attr('href');
           if (nextHref && nextHref.startsWith('/')) {
-             currentUrl = `https://cl.computrabajo.com${nextHref}`;
+            currentUrl = `https://cl.computrabajo.com${nextHref}`;
           } else {
-             currentUrl = null;
+            currentUrl = null;
           }
         } else {
           currentUrl = null;
