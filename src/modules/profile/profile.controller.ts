@@ -7,6 +7,7 @@ import {
   UseInterceptors,
   UploadedFile,
   BadRequestException,
+  Res,
 } from '@nestjs/common';
 import { ProfileService } from './profile.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -18,6 +19,7 @@ import {
   ApiOperation,
   ApiResponse,
   ApiConsumes,
+  ApiProduces,
   ApiBody,
 } from '@nestjs/swagger';
 import type { AuthUser } from '../../common/interfaces/auth-user.interface';
@@ -41,6 +43,37 @@ export class ProfileController {
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
   getProfile(@CurrentUser() user: AuthUser) {
     return this.profileService.getProfile(user.userId);
+  }
+
+  @Get('export/pdf')
+  @ApiOperation({
+    summary: 'Export profile as ATS-friendly PDF',
+    description: 'Generates and downloads a professional, ATS-optimized PDF of the user profile.',
+  })
+  @ApiProduces('application/pdf')
+  @ApiResponse({ 
+    status: 200, 
+    description: 'PDF successfully generated.',
+    content: {
+      'application/pdf': {
+        schema: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized.' })
+  async exportPdf(@CurrentUser() user: AuthUser, @Res() res: any) {
+    const pdfBuffer = await this.profileService.exportPdf(user.userId);
+    
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': 'attachment; filename=resume.pdf',
+      'Content-Length': pdfBuffer.length,
+    });
+    
+    res.end(pdfBuffer);
   }
 
   @Post('cv')
