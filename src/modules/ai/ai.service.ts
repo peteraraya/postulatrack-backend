@@ -28,7 +28,7 @@ export class AiService {
     }
   }
 
-  async callOpenRouter(prompt: string, systemPrompt?: string, model: string = 'google/gemma-2-9b-it:free'): Promise<string> {
+  async callOpenRouter(prompt: string, systemPrompt?: string, model: string = 'meta-llama/llama-3.1-8b-instruct:free'): Promise<string> {
     if (!this.openRouterClient) {
       throw new InternalServerErrorException('OpenRouter API Key no configurada en el backend.');
     }
@@ -65,7 +65,7 @@ export class AiService {
     try {
       const completion = await this.groqClient.chat.completions.create({
         messages,
-        model: 'llama3-8b-8192', // or mixtral-8x7b-32768
+        model: 'llama-3.1-8b-instant', // or mixtral-8x7b-32768
         temperature: 0.7,
       });
       return completion.choices[0]?.message?.content || '';
@@ -86,13 +86,17 @@ export class AiService {
     }
 
     try {
-      // Gemini 1.5 Flash is the fast/free tier model typically used
-      const model = this.geminiClient.getGenerativeModel({ 
-        model: 'gemini-1.5-flash',
-        systemInstruction: systemPrompt
-      });
-
-      const parts: any[] = [{ text: prompt }];
+      // Use the latest flash model
+      let modelParams: any = { model: 'gemini-flash-latest' };
+      
+      // Some API Keys / Regions throw 404 if systemInstruction is used natively. 
+      // We prepend it to the text instead for max compatibility.
+      const parts: any[] = [];
+      if (systemPrompt) {
+        parts.push({ text: `[System Instruction: ${systemPrompt}]\n\nUser Request: ${prompt}` });
+      } else {
+        parts.push({ text: prompt });
+      }
 
       if (fileBase64 && fileMimeType) {
         // Remove standard base64 prefix if present (e.g. data:application/pdf;base64,...)
@@ -106,12 +110,30 @@ export class AiService {
         });
       }
 
-      const result = await model.generateContent(parts);
-      const response = await result.response;
-      return response.text();
-    } catch (error) {
-      console.error('Error calling Gemini:', error);
-      throw new InternalServerErrorException('Error al comunicarse con Gemini.');
+      let model = this.geminiClient.getGenerativeModel(modelParams);
+      
+      try {
+        const result = await model.generateContent({
+          contents: [{ role: 'user', parts }],
+        });
+        const response = await result.response;
+        return response.text();
+      } catch (err: any) {
+        // Fallback to gemini-pro-latest if flash fails
+        if (err.message && err.message.includes('404')) {
+          console.warn('gemini-flash-latest threw 404, falling back to gemini-pro-latest...');
+          model = this.geminiClient.getGenerativeModel({ model: 'gemini-pro-latest' });
+          const result = await model.generateContent({
+            contents: [{ role: 'user', parts }],
+          });
+          const response = await result.response;
+          return response.text();
+        }
+        throw err;
+      }
+    } catch (error: any) {
+      console.error('Error calling Gemini:', error.message);
+      throw new InternalServerErrorException('Error al comunicarse con Gemini: ' + error.message);
     }
   }
 

@@ -7,6 +7,7 @@ import cookieParser from 'cookie-parser';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
 import * as fs from 'fs';
+import * as express from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -25,6 +26,8 @@ async function bootstrap() {
     credentials: true,
   });
   app.use(cookieParser());
+  app.use(express.json({ limit: '10mb' }));
+  app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
   app.setGlobalPrefix('api', {
     exclude: [{ path: '/', method: RequestMethod.GET }],
