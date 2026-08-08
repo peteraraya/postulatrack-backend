@@ -15,6 +15,7 @@ import { join } from 'path';
 import { JobAlertsModule } from './modules/job-alerts/job-alerts.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { AppService } from './app.service';
     RecommendationModule,
     AiModule,
     JobAlertsModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
