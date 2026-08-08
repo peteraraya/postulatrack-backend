@@ -1,9 +1,119 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, InternalServerErrorException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import Groq from 'groq-sdk';
+import OpenAI from 'openai';
 
 @Injectable()
 export class AiService {
-  constructor(private readonly prisma: PrismaService) {}
+  private groqClient: Groq | null = null;
+  private geminiClient: GoogleGenerativeAI | null = null;
+  private openRouterClient: OpenAI | null = null;
+
+  constructor(private readonly prisma: PrismaService) {
+    if (process.env.GROQ_API_KEY) {
+      this.groqClient = new Groq({ apiKey: process.env.GROQ_API_KEY });
+    }
+    
+    if (process.env.GEMINI_API_KEY) {
+      this.geminiClient = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    }
+    
+    if (process.env.OPENROUTER_API_KEY) {
+      // OpenRouter uses the exact same SDK as OpenAI, you just change the baseURL
+      this.openRouterClient = new OpenAI({
+        baseURL: 'https://openrouter.ai/api/v1',
+        apiKey: process.env.OPENROUTER_API_KEY,
+      });
+    }
+  }
+
+  async callOpenRouter(prompt: string, systemPrompt?: string, model: string = 'google/gemma-2-9b-it:free'): Promise<string> {
+    if (!this.openRouterClient) {
+      throw new InternalServerErrorException('OpenRouter API Key no configurada en el backend.');
+    }
+
+    const messages: any[] = [];
+    if (systemPrompt) {
+      messages.push({ role: 'system', content: systemPrompt });
+    }
+    messages.push({ role: 'user', content: prompt });
+
+    try {
+      const completion = await this.openRouterClient.chat.completions.create({
+        messages,
+        model: model, // by default, uses a highly capable and 100% free model on OpenRouter
+      });
+      return completion.choices[0]?.message?.content || '';
+    } catch (error) {
+      console.error('Error calling OpenRouter:', error);
+      throw new InternalServerErrorException('Error al comunicarse con OpenRouter.');
+    }
+  }
+
+  async callGroq(prompt: string, systemPrompt?: string): Promise<string> {
+    if (!this.groqClient) {
+      throw new InternalServerErrorException('Groq API Key no configurada en el backend.');
+    }
+
+    const messages: any[] = [];
+    if (systemPrompt) {
+      messages.push({ role: 'system', content: systemPrompt });
+    }
+    messages.push({ role: 'user', content: prompt });
+
+    try {
+      const completion = await this.groqClient.chat.completions.create({
+        messages,
+        model: 'llama3-8b-8192', // or mixtral-8x7b-32768
+        temperature: 0.7,
+      });
+      return completion.choices[0]?.message?.content || '';
+    } catch (error) {
+      console.error('Error calling Groq:', error);
+      throw new InternalServerErrorException('Error al comunicarse con Groq.');
+    }
+  }
+
+  async callGemini(
+    prompt: string,
+    systemPrompt?: string,
+    fileBase64?: string,
+    fileMimeType?: string,
+  ): Promise<string> {
+    if (!this.geminiClient) {
+      throw new InternalServerErrorException('Gemini API Key no configurada en el backend.');
+    }
+
+    try {
+      // Gemini 1.5 Flash is the fast/free tier model typically used
+      const model = this.geminiClient.getGenerativeModel({ 
+        model: 'gemini-1.5-flash',
+        systemInstruction: systemPrompt
+      });
+
+      const parts: any[] = [{ text: prompt }];
+
+      if (fileBase64 && fileMimeType) {
+        // Remove standard base64 prefix if present (e.g. data:application/pdf;base64,...)
+        const base64Data = fileBase64.includes(',') ? fileBase64.split(',')[1] : fileBase64;
+        
+        parts.push({
+          inlineData: {
+            data: base64Data,
+            mimeType: fileMimeType,
+          },
+        });
+      }
+
+      const result = await model.generateContent(parts);
+      const response = await result.response;
+      return response.text();
+    } catch (error) {
+      console.error('Error calling Gemini:', error);
+      throw new InternalServerErrorException('Error al comunicarse con Gemini.');
+    }
+  }
 
   async generateMessage(applicationId: string) {
     const application = await this.prisma.application.findUnique({
