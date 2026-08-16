@@ -48,11 +48,12 @@ export class ProfileController {
   @Get('export/pdf')
   @ApiOperation({
     summary: 'Export profile as ATS-friendly PDF',
-    description: 'Generates and downloads a professional, ATS-optimized PDF of the user profile.',
+    description:
+      'Generates and downloads a professional, ATS-optimized PDF of the user profile.',
   })
   @ApiProduces('application/pdf')
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: 'PDF successfully generated.',
     content: {
       'application/pdf': {
@@ -66,13 +67,13 @@ export class ProfileController {
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
   async exportPdf(@CurrentUser() user: AuthUser, @Res() res: any) {
     const pdfBuffer = await this.profileService.exportPdf(user.userId);
-    
+
     res.set({
       'Content-Type': 'application/pdf',
       'Content-Disposition': 'attachment; filename=resume.pdf',
       'Content-Length': pdfBuffer.length,
     });
-    
+
     res.end(pdfBuffer);
   }
 

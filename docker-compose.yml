@@ -22,9 +22,9 @@ services:
         condition: service_healthy
     command: npm run start:dev
 
-  # PostgreSQL Database
+  # PostgreSQL Database (con extensión pgvector)
   db:
-    image: postgres:15-alpine
+    image: pgvector/pgvector:pg15
     container_name: postulatrack_db
     environment:
       POSTGRES_USER: postgres

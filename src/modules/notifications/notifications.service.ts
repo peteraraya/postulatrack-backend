@@ -37,7 +37,9 @@ export class NotificationsService {
    */
   async trigger(channel: string, event: string, data: any) {
     if (!this.pusher) {
-      this.logger.warn(`Cannot trigger event ${event}: Pusher is not configured`);
+      this.logger.warn(
+        `Cannot trigger event ${event}: Pusher is not configured`,
+      );
       return;
     }
 

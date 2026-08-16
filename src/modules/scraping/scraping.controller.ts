@@ -1,8 +1,16 @@
-import { Controller, Post } from '@nestjs/common';
+import { Controller, Post, UseGuards } from '@nestjs/common';
 import { ScrapingService } from './scraping.service';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 
 @ApiTags('Scraping')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('scraping')
 export class ScrapingController {
   constructor(private readonly scrapingService: ScrapingService) {}

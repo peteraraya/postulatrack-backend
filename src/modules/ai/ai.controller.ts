@@ -32,8 +32,11 @@ export class AiController {
   })
   @ApiResponse({ status: 201, description: 'Message generated successfully.' })
   @ApiResponse({ status: 404, description: 'Application not found.' })
-  generateMessage(@Body('applicationId') applicationId: string) {
-    return this.aiService.generateMessage(applicationId);
+  generateMessage(
+    @Body('applicationId') applicationId: string,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.aiService.generateMessage(applicationId, user.userId);
   }
 
   @Post('analyze-offer')
@@ -93,8 +96,11 @@ export class AiController {
     description: 'Interview questions generated successfully.',
   })
   @ApiResponse({ status: 404, description: 'Application not found.' })
-  generateInterviewPrep(@Body('applicationId') applicationId: string) {
-    return this.aiService.generateInterviewPrep(applicationId);
+  generateInterviewPrep(
+    @Body('applicationId') applicationId: string,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.aiService.generateInterviewPrep(applicationId, user.userId);
   }
 
   @Get('general-interview-prep')
@@ -114,7 +120,8 @@ export class AiController {
   @Post('chat/groq')
   @ApiOperation({
     summary: 'Proxy endpoint to chat with Groq AI (Llama)',
-    description: 'Sends a prompt to Groq API securely from the backend to hide the API key.',
+    description:
+      'Sends a prompt to Groq API securely from the backend to hide the API key.',
   })
   @ApiBody({
     schema: {
@@ -126,7 +133,10 @@ export class AiController {
       required: ['prompt'],
     },
   })
-  @ApiResponse({ status: 201, description: 'AI response successfully generated.' })
+  @ApiResponse({
+    status: 201,
+    description: 'AI response successfully generated.',
+  })
   async chatGroq(
     @Body('prompt') prompt: string,
     @Body('systemPrompt') systemPrompt?: string,
@@ -138,7 +148,8 @@ export class AiController {
   @Post('chat/gemini')
   @ApiOperation({
     summary: 'Proxy endpoint to chat with Google Gemini',
-    description: 'Sends a prompt to Gemini API securely from the backend. Supports file uploads (like PDF) in base64 format.',
+    description:
+      'Sends a prompt to Gemini API securely from the backend. Supports file uploads (like PDF) in base64 format.',
   })
   @ApiBody({
     schema: {
@@ -146,27 +157,44 @@ export class AiController {
       properties: {
         prompt: { type: 'string' },
         systemPrompt: { type: 'string', nullable: true },
-        fileBase64: { type: 'string', nullable: true, description: 'Base64 string of the file (e.g. PDF)' },
-        fileMimeType: { type: 'string', nullable: true, description: 'MIME type of the file (e.g. application/pdf)' },
+        fileBase64: {
+          type: 'string',
+          nullable: true,
+          description: 'Base64 string of the file (e.g. PDF)',
+        },
+        fileMimeType: {
+          type: 'string',
+          nullable: true,
+          description: 'MIME type of the file (e.g. application/pdf)',
+        },
       },
       required: ['prompt'],
     },
   })
-  @ApiResponse({ status: 201, description: 'AI response successfully generated.' })
+  @ApiResponse({
+    status: 201,
+    description: 'AI response successfully generated.',
+  })
   async chatGemini(
     @Body('prompt') prompt: string,
     @Body('systemPrompt') systemPrompt?: string,
     @Body('fileBase64') fileBase64?: string,
     @Body('fileMimeType') fileMimeType?: string,
   ) {
-    const response = await this.aiService.callGemini(prompt, systemPrompt, fileBase64, fileMimeType);
+    const response = await this.aiService.callGemini(
+      prompt,
+      systemPrompt,
+      fileBase64,
+      fileMimeType,
+    );
     return { response };
   }
 
   @Post('chat/openrouter')
   @ApiOperation({
     summary: 'Proxy endpoint to chat with OpenRouter',
-    description: 'Sends a prompt to OpenRouter API securely. OpenRouter provides access to dozens of free open-source models like Llama, Gemma, and Zephyr.',
+    description:
+      'Sends a prompt to OpenRouter API securely. OpenRouter provides access to dozens of free open-source models like Llama, Gemma, and Zephyr.',
   })
   @ApiBody({
     schema: {
@@ -174,18 +202,29 @@ export class AiController {
       properties: {
         prompt: { type: 'string' },
         systemPrompt: { type: 'string', nullable: true },
-        model: { type: 'string', nullable: true, description: 'Optional. Defaults to google/gemma-2-9b-it:free' },
+        model: {
+          type: 'string',
+          nullable: true,
+          description: 'Optional. Defaults to google/gemma-2-9b-it:free',
+        },
       },
       required: ['prompt'],
     },
   })
-  @ApiResponse({ status: 201, description: 'AI response successfully generated.' })
+  @ApiResponse({
+    status: 201,
+    description: 'AI response successfully generated.',
+  })
   async chatOpenRouter(
     @Body('prompt') prompt: string,
     @Body('systemPrompt') systemPrompt?: string,
     @Body('model') model?: string,
   ) {
-    const response = await this.aiService.callOpenRouter(prompt, systemPrompt, model);
+    const response = await this.aiService.callOpenRouter(
+      prompt,
+      systemPrompt,
+      model,
+    );
     return { response };
   }
 }

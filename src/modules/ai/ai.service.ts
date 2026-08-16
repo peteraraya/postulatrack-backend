@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import Groq from 'groq-sdk';
@@ -14,11 +18,11 @@ export class AiService {
     if (process.env.GROQ_API_KEY) {
       this.groqClient = new Groq({ apiKey: process.env.GROQ_API_KEY });
     }
-    
+
     if (process.env.GEMINI_API_KEY) {
       this.geminiClient = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     }
-    
+
     if (process.env.OPENROUTER_API_KEY) {
       // OpenRouter uses the exact same SDK as OpenAI, you just change the baseURL
       this.openRouterClient = new OpenAI({
@@ -28,9 +32,15 @@ export class AiService {
     }
   }
 
-  async callOpenRouter(prompt: string, systemPrompt?: string, model: string = 'meta-llama/llama-3.1-8b-instruct:free'): Promise<string> {
+  async callOpenRouter(
+    prompt: string,
+    systemPrompt?: string,
+    model: string = 'meta-llama/llama-3.1-8b-instruct:free',
+  ): Promise<string> {
     if (!this.openRouterClient) {
-      throw new InternalServerErrorException('OpenRouter API Key no configurada en el backend.');
+      throw new InternalServerErrorException(
+        'OpenRouter API Key no configurada en el backend.',
+      );
     }
 
     const messages: any[] = [];
@@ -47,13 +57,17 @@ export class AiService {
       return completion.choices[0]?.message?.content || '';
     } catch (error) {
       console.error('Error calling OpenRouter:', error);
-      throw new InternalServerErrorException('Error al comunicarse con OpenRouter.');
+      throw new InternalServerErrorException(
+        'Error al comunicarse con OpenRouter.',
+      );
     }
   }
 
   async callGroq(prompt: string, systemPrompt?: string): Promise<string> {
     if (!this.groqClient) {
-      throw new InternalServerErrorException('Groq API Key no configurada en el backend.');
+      throw new InternalServerErrorException(
+        'Groq API Key no configurada en el backend.',
+      );
     }
 
     const messages: any[] = [];
@@ -82,26 +96,32 @@ export class AiService {
     fileMimeType?: string,
   ): Promise<string> {
     if (!this.geminiClient) {
-      throw new InternalServerErrorException('Gemini API Key no configurada en el backend.');
+      throw new InternalServerErrorException(
+        'Gemini API Key no configurada en el backend.',
+      );
     }
 
     try {
       // Use the latest flash model
-      let modelParams: any = { model: 'gemini-flash-latest' };
-      
-      // Some API Keys / Regions throw 404 if systemInstruction is used natively. 
+      const modelParams: any = { model: 'gemini-flash-latest' };
+
+      // Some API Keys / Regions throw 404 if systemInstruction is used natively.
       // We prepend it to the text instead for max compatibility.
       const parts: any[] = [];
       if (systemPrompt) {
-        parts.push({ text: `[System Instruction: ${systemPrompt}]\n\nUser Request: ${prompt}` });
+        parts.push({
+          text: `[System Instruction: ${systemPrompt}]\n\nUser Request: ${prompt}`,
+        });
       } else {
         parts.push({ text: prompt });
       }
 
       if (fileBase64 && fileMimeType) {
         // Remove standard base64 prefix if present (e.g. data:application/pdf;base64,...)
-        const base64Data = fileBase64.includes(',') ? fileBase64.split(',')[1] : fileBase64;
-        
+        const base64Data = fileBase64.includes(',')
+          ? fileBase64.split(',')[1]
+          : fileBase64;
+
         parts.push({
           inlineData: {
             data: base64Data,
@@ -111,7 +131,7 @@ export class AiService {
       }
 
       let model = this.geminiClient.getGenerativeModel(modelParams);
-      
+
       try {
         const result = await model.generateContent({
           contents: [{ role: 'user', parts }],
@@ -121,8 +141,12 @@ export class AiService {
       } catch (err: any) {
         // Fallback to gemini-pro-latest if flash fails
         if (err.message && err.message.includes('404')) {
-          console.warn('gemini-flash-latest threw 404, falling back to gemini-pro-latest...');
-          model = this.geminiClient.getGenerativeModel({ model: 'gemini-pro-latest' });
+          console.warn(
+            'gemini-flash-latest threw 404, falling back to gemini-pro-latest...',
+          );
+          model = this.geminiClient.getGenerativeModel({
+            model: 'gemini-pro-latest',
+          });
           const result = await model.generateContent({
             contents: [{ role: 'user', parts }],
           });
@@ -133,13 +157,15 @@ export class AiService {
       }
     } catch (error: any) {
       console.error('Error calling Gemini:', error.message);
-      throw new InternalServerErrorException('Error al comunicarse con Gemini: ' + error.message);
+      throw new InternalServerErrorException(
+        'Error al comunicarse con Gemini: ' + error.message,
+      );
     }
   }
 
-  async generateMessage(applicationId: string) {
-    const application = await this.prisma.application.findUnique({
-      where: { id: applicationId },
+  async generateMessage(applicationId: string, userId: string) {
+    const application = await this.prisma.application.findFirst({
+      where: { id: applicationId, userId },
       include: {
         offer: true,
       },
@@ -202,9 +228,9 @@ así como mencionar cómo tu experiencia previa se relaciona con los requisitos 
     return { translatedText };
   }
 
-  async generateInterviewPrep(applicationId: string) {
-    const application = await this.prisma.application.findUnique({
-      where: { id: applicationId },
+  async generateInterviewPrep(applicationId: string, userId: string) {
+    const application = await this.prisma.application.findFirst({
+      where: { id: applicationId, userId },
       include: {
         offer: true,
       },
